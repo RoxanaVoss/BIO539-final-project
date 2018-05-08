@@ -12,7 +12,9 @@ Updated data can be uploaded and implemented in the R script, all analysis shoul
 The Updated data should have the same format as the previous one (column names, number formatting)
 
 ## Statistical Outcomes
-
+- Descriptive Statistics
+- Descriptive Charts
+- Map of user distribution
 
 ## Running tests
 Download the R script or the R markdown.
