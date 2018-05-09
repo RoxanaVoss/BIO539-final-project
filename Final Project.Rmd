@@ -1,0 +1,228 @@
+---
+title: "BIO593 (Big Data Analysis) Final Project"
+author: "Roxana Voss"
+date: "8 Mai 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls()) #the whole environment
+
+#install.packages("plyr")
+#install.packages("maptools")
+#install.packages("ddply")
+#install.packages("tidyverse")
+#install.packages("maps")
+#install.packages("viridis")
+#install.packages("ggthemes")
+#install.packages("ggmap")
+#install.packages("zipcode")
+#install.packages("AlbersUSA")
+#install.packages("ggplot2")
+#install.packages("hrbrmstr")
+
+library(plyr)
+library(ggplot2)
+library(maptools)
+library(zipcode)
+library(tidyverse)
+library(maps)
+library(viridis)
+library(ggthemes)
+library(readr)
+
+#my data
+Clean_Data <- read_delim("~/Desktop/Big Data Analysis/R/Final Project/Clean_Data.csv", 
+                         ";", escape_double = FALSE, col_types = cols(`Charging Time (hh:mm:ss)` = col_time(format = "%H:%M:%S"), 
+                                                                      Date = col_date(format = "%d.%m.%Y"), 
+                                                                      Date_1 = col_date(format = "%d.%m.%Y"), 
+                                                                      `End Date` = col_datetime(format = "%d.%m.%Y %H:%M:%S"), 
+                                                                      `Energy (kWh)` = col_double(), `Start Date` = col_datetime(format = "%d.%m.%Y %H:%M:%S"), 
+                                                                      Time = col_time(format = "%H:%M:%S"), 
+                                                                      `Time no charge` = col_time(format = "%H:%M:%S"), 
+                                                                      Time_1 = col_time(format = "%H:%M:%S"), 
+                                                                      `Total Duration (hh:mm:ss)` = col_time(format = "%H:%M:%S"), 
+                                                                      `Transaction Date (Pacific Time)` = col_datetime(format = "%d.%m.%Y %H:%M:%S")), 
+                         locale = locale(decimal_mark = ","), 
+                         trim_ws = TRUE)
+
+```
+
+# Electric Vehicle (EV) Charging Behavior in existing Infrastructures
+
+This is an R Markdown document to understand the processed statistics of the data.
+It is a trial version, which keeps record of possibly usable statistics for the research. 
+
+## Descriptive Statistics
+
+
+Energy used in kWh: Mean, Standard Deviation, Minimum, Maximum and Sum of all the charging events
+
+```{r Energy}
+mean(Clean_Data$`Energy (kWh)`, na.rm=TRUE)
+sd(Clean_Data$`Energy (kWh)`, na.rm=TRUE)
+min(Clean_Data$`Energy (kWh)`, na.rm=TRUE)
+max(Clean_Data$`Energy (kWh)`, na.rm=TRUE)
+sum(Clean_Data$`Energy (kWh)`, na.rm=TRUE)
+```
+
+\  
+
+GHG Savings in kg: Mean, Standard Deviation, Minimum, Maximum and Sum of all the charging events
+
+```{r GHG}
+mean(Clean_Data$`GHG Savings (kg)`, na.rm=TRUE)
+sd(Clean_Data$`GHG Savings (kg)`, na.rm=TRUE)
+min(Clean_Data$`GHG Savings (kg)`, na.rm=TRUE)
+max(Clean_Data$`GHG Savings (kg)`, na.rm=TRUE)
+sum(Clean_Data$`GHG Savings (kg)`, na.rm=TRUE)
+```
+
+ \newpage
+
+Gasoline Savings in Gallons: Mean, Standard Deviation, Minimum, Maximum and Sum of all the charging events
+
+```{r Gas}
+mean(Clean_Data$`Gasoline Savings (gallons)`, na.rm=TRUE,)
+sd(Clean_Data$`Gasoline Savings (gallons)`, na.rm=TRUE)
+min(Clean_Data$`Gasoline Savings (gallons)`, na.rm=TRUE)
+max(Clean_Data$`Gasoline Savings (gallons)`, na.rm=TRUE)
+sum(Clean_Data$`Gasoline Savings (gallons)`, na.rm=TRUE)
+```
+\  
+
+Total Plugged in Time in sec: Mean, Standard Deviation, Minimum, Maximum and Sum of all the charging events
+If further needed, it can be converted in a common time format.
+
+```{r TT}
+mean(Clean_Data$`Total Duration (hh:mm:ss)`, na.rm=TRUE)
+sd(Clean_Data$`Total Duration (hh:mm:ss)`, na.rm=TRUE)
+min(Clean_Data$`Total Duration (hh:mm:ss)`, na.rm=TRUE)
+max(Clean_Data$`Total Duration (hh:mm:ss)`, na.rm=TRUE)
+sum(Clean_Data$`Total Duration (hh:mm:ss)`, na.rm=TRUE)
+
+```
+
+ \newpage
+
+Total Charging Time in sec: Mean, Standard Deviation, Minimum, Maximum and Sum of all the charging events
+If further needed, it can be converted in a common time format.
+
+```{r CT}
+mean(Clean_Data$`Charging Time (hh:mm:ss)`, na.rm=TRUE)
+sd(Clean_Data$`Charging Time (hh:mm:ss)`, na.rm=TRUE)
+min(Clean_Data$`Charging Time (hh:mm:ss)`, na.rm=TRUE)
+max(Clean_Data$`Charging Time (hh:mm:ss)`, na.rm=TRUE)
+sum(Clean_Data$`Charging Time (hh:mm:ss)`, na.rm=TRUE)
+
+```
+
+\  
+
+Time the EV is plugged in after it has been fully charged in sec: Mean, Standard Deviation, Minimum, Maximum and Sum of all the charging events
+If further needed, it can be converted in a common time format.
+
+```{r NC}
+mean(Clean_Data$`Time no charge`, na.rm=TRUE)
+sd(Clean_Data$`Time no charge`, na.rm=TRUE)
+min(Clean_Data$`Time no charge`, na.rm=TRUE)
+max(Clean_Data$`Time no charge`, na.rm=TRUE)
+sum(Clean_Data$`Time no charge`, na.rm=TRUE)
+
+```
+ \newpage
+
+
+## Descriptive Charts
+
+Pie Chart about Areas and the Amount of Charging Events.
+
+```{r Area, echo=FALSE}
+ag <- Clean_Data %>% count(Area)
+pie(ag$n, labels = ag$Area, main="Charging Stations Used by Area")
+```
+
+
+ \newpage
+
+Two Versions of bar charts about the usage of single Stations.
+In the next step clustered in areas which show the range of the usage of the single stations in this region.
+
+```{r Stations, echo=FALSE}
+st1 <- Clean_Data %>% group_by(Area, `Station Name`) %>% tally()
+barplot(st1$n, main = "Charging events per station", xlab="Different Stations")
+ggplot(data = st1, aes(x=`Station Name`, y=n))+ geom_col()
+ggplot(data = st1, aes(x = Area, y = n)) + geom_boxplot()
+```
+
+ \newpage
+Pie Chart about Areas and the Amount of Charging Stations in the zone.
+
+```{r sz, echo=FALSE}
+st3 <- st1 %>% select(Area, `Station Name`) %>% group_by(Area) %>% count(Area)
+pie(st3$n, labels = st3$Area, main="Charging Stations Used by Area")
+```
+
+ \newpage
+Barchart about the usage of all stations per year.
+In the next step clustered in areas which show the growth of charging events over the years in certain areas.
+
+```{r Yearly, echo=FALSE}
+ay1 <- Clean_Data %>% group_by(Year) %>% tally()
+barplot(ay1$n, main = "Charging events per year", xlab="Years 2013 to 2017")
+ay <- Clean_Data %>% group_by(Year, Area) %>% tally()
+ggplot(data = ay, aes(x=Year, y=n))+ geom_boxplot() + facet_wrap(~ Area) + theme_bw()
+
+```
+
+ \newpage
+Barchart about the usage of all stations per weekday.
+In the next step clustered in areas which show the usage of charging stations per weekday in certain areas.
+
+```{r wd, echo=FALSE}
+ad <- Clean_Data %>% group_by(Day, Area) %>% tally()
+ad2 <- Clean_Data %>% group_by(Day) %>% tally()
+ggplot(data = ad2, aes(x=Day, y=n))+ geom_col()
+ggplot(data = ad, aes(x=Day, y=n))+ geom_col() + facet_wrap(~ Area) + theme_bw()
+
+```
+
+ \newpage
+Barchart about the usage of all stations over time.
+In the next step clustered in areas, a line plot which show the usage of charging stations over the time certain areas.
+
+```{r am, echo=FALSE}
+am <- Clean_Data %>% group_by(Date) %>% tally() #whynotwork
+am2 <- Clean_Data %>% group_by(Date, Area) %>% tally()
+barplot(am$n, main = "Evolution of Charging events", xlab="Days, Month and Years")
+ggplot(data = am2, aes(x=Date, y=n))+ geom_line() + facet_wrap(~ Area) + theme_bw()
+
+```
+ \newpage
+
+## Map of User Distribution 
+
+You can see two versions of a map of the United States which show the distribution of charging station users using RI charging stations.
+```{r map, echo=FALSE}
+data(zipcode)
+us<-map_data('state')
+DZ <- Clean_Data
+DZ.zip <- aggregate(data.frame(count=DZ$`User ID`), list(zip=DZ$`Driver Postal Code`), length)
+DZ <- merge(DZ.zip, zipcode, by='zip')
+
+#works better
+ggplot(DZ, aes(longitude,latitude)) +
+        geom_polygon(data=us,aes(x=long,y=lat,group=group),color='red',fill=NA,alpha=.35)+
+        geom_point(aes(color = count), size= 3.5,alpha=.45) +
+        xlim(-125,-65)+ylim(20,50) +
+        theme(panel.background = element_blank())
+
+#trial
+ggplot(DZ, aes(longitude,latitude)) +
+        geom_polygon(data=us,aes(x=long,y=lat,group=group),color='black',fill=NA,alpha=.35)+
+        geom_point(aes(color = count), size = 3.5, alpha=0.5) + 
+        scale_colour_gradient(low= "blue", high = "red") +
+        xlim(-125,-65)+ylim(20,50) +
+        theme(panel.background = element_blank())
+```
